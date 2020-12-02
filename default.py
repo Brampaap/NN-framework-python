@@ -1,6 +1,6 @@
 import numpy as np #Matrix operation lib. Otherwise we should use too many loops.
 import matplotlib.pyplot as plt
-import my_lib as NN
+import not_torch as NN
 
 def loader(X, Y, batch_size):
     """
@@ -9,7 +9,7 @@ def loader(X, Y, batch_size):
     @ X - features dataset
     @ Y - answers dataset
     
-    @ yield `
+    @ yield `X[batch_idx], Y[batch_idx]`
     """
     n = X.shape[0]
     
@@ -26,7 +26,7 @@ def loader(X, Y, batch_size):
         yield X[batch_idx], Y[batch_idx]
 
 def main():
-    
+    pass
 
 if __name__ == "__main__":
     main()

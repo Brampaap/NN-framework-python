@@ -1,6 +1,6 @@
 import numpy as np #Matrix operation lib. Otherwise we should use too many loops.
 import matplotlib.pyplot as plt
-import my_lib as NN
+import not_torch as NN
 from tkinter import *
 import tkinter
 np.warnings.filterwarnings('ignore', category=np.VisibleDeprecationWarning) # For pretty output
@@ -29,7 +29,7 @@ def loader(X, Y, batch_size):
         yield X[batch_idx], Y[batch_idx]
 
 def main():
-
+    # Dataset
     X = np.array([  [ 1, 1, 1, 1, 1, 1, 0 ],#0
                     [ 0, 1, 1, 1, 1, 0, 0 ],#1
                     [ 0, 1, 1, 0, 1, 1, 1 ],#2
@@ -41,49 +41,62 @@ def main():
                     [ 1, 1, 1, 1, 1, 1, 1 ],#8
                     [ 1, 1, 1, 1, 0, 0, 1 ]#9
                     ])
+                    
     y = np.array([[0],[1],[2],[3],[4],[5],[6],[7],[8],[9]])
-
+    
+    # Model init
     model = NN.layers.Sequential(
         NN.layers.Linear(7, 9),
         NN.layers.LeakyReLU(),
         NN.layers.Linear(9, 9),
         NN.layers.LeakyReLU(),
         NN.layers.Linear(9, 1),
-        
-        # Архитектура  inp(7) x 9 x 9 x out(1)
-
     )
-
+    # Criterion
     criterion = NN.criterions.MSE()
-
+    # Optimizer
+    optimizer = NN.optimizers.RMSprop()
+    
+    # Params
     epochs = 2000
     batch_size = 10
     learning_rate = 1e-2
-    optimizer = NN.optimizers.RMSprop()
 
     history = []
+    # Switch model to train mode
     model.train()
+    
     for i in range(epochs):
+    
         for x, y_true in loader(X, y, batch_size):
-            # forward -- считаем все значения до функции потерь
+        
+            # forward - calculate all values until loss
             y_pred = model.forward(x)
+            
+            # loss - calculate loss
             loss = criterion.forward(y_pred, y_true)
             
-            # backward -- считаем все градиенты в обратном порядке
+            # Backward pass though loss
             grad = criterion.backward(y_pred, y_true)
+            
+            # Backward pass though model
             model.backward(x, grad)
-            # обновляем веса
-            optimizer.update(model.parameters(),
-                model.grad_parameters(),
-                learning_rate)
             
-            
+            # Make optimizer step
+            optimizer.update(params    = model.parameters(),
+                             gradients = model.grad_parameters(),
+                             lr        = learning_rate,
+                            )
+            # Update loss history
             history.append(loss)
             
-
+    # Print last loss value
     print(history[-1], ": LOSS")
+    
+    # Switch model to inference mode
     model.eval()
     
+######## VISUALIZATION ########
     root = Tk()
     root.title("GUI")
     root.geometry("200x200")
@@ -129,7 +142,6 @@ def main():
                 command=start).pack()
 
     root.mainloop()
-    
     
 
 

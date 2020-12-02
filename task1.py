@@ -1,6 +1,6 @@
 import numpy as np #Matrix operation lib. Otherwise we should use too many loops.
 import matplotlib.pyplot as plt
-import my_lib as NN
+import not_torch as NN
 np.warnings.filterwarnings('ignore', category=np.VisibleDeprecationWarning) # For pretty output
 
 def loader(X, Y, batch_size):
@@ -27,6 +27,7 @@ def loader(X, Y, batch_size):
         yield X[batch_idx], Y[batch_idx]
 
 def main():
+    # Dataset
     X = np.array([[1,1,0,1,1,1,1],
                   [0,0,0,1,0,1,0],
                   [0,1,1,1,1,0,1],
@@ -42,7 +43,8 @@ def main():
     y = np.array([[0,0,0,0],[0,0,0,1],[0,0,1,0],[0,0,1,1],[0,1,0,0],
                   [0,1,0,1],[0,1,1,0],[0,1,1,1],[1,0,0,0],[1,0,0,1],
                  ])
-
+                 
+    # Model init
     model = NN.layers.Sequential(
         NN.layers.Linear(7, 9),
         NN.layers.Sigmoid(),
@@ -50,51 +52,63 @@ def main():
         NN.layers.Sigmoid(),
         NN.layers.Linear(9, 4),
         NN.layers.Sigmoid(),
-        
-        # Архитектура  inp(7) x 9 x 9 x out(4)
     )
-
+    
+    # Loss
     criterion = NN.criterions.MSE()
-
+    # Optimizer
+    optimizer = NN.optimizers.RMSprop()
+    # Params
     epochs = 270
     batch_size = 10
     learning_rate = 10
-    optimizer = NN.optimizers.RMSprop()
-
+    
     history = []
+    # Switch model to train mode
     model.train()
+    
     for i in range(epochs):
+    
         for x, y_true in loader(X, y, batch_size):
-            # forward -- считаем все значения до функции потерь
+        
+            # forward - calculate all values until loss
             y_pred = model.forward(x)
+            
+            # loss - calculate loss
             loss = criterion.forward(y_pred, y_true)
-            #print(y_pred, y_true)
-            #print('SUM OF SQUARES:', np.mean(np.power(y_pred-y_true, 2)))
             
-            # backward -- считаем все градиенты в обратном порядке
+            # Backward pass though loss
             grad = criterion.backward(y_pred, y_true)
+            
+            # Backward pass though model
             model.backward(x, grad)
-            # обновляем веса
-            optimizer.update(model.parameters(),
-                model.grad_parameters(),
-                learning_rate)
             
-            
+            # Make optimizer step
+            optimizer.update(params    = model.parameters(),
+                             gradients = model.grad_parameters(),
+                             lr        = learning_rate,
+                             )
+            # Update loss history
             history.append(loss)
             
         
-
+    # Loss plot
     plt.title("Training loss")
     plt.xlabel("iteration")
     plt.ylabel("loss")
     plt.plot(history, 'b')
     plt.show()
-
+    
+    # Print last loss value
     print(history[-1], ": LOSS")
+    
+    # Switch model to inference mode
     model.eval()
-
-    Y_pred = model.forward(X)
-    print(np.round(Y_pred)==y) # Если всё True, значит каждое значение предсказано правильно.
+    
+    # Prediction
+    y_pred = model.forward(X)
+    # Accuracy
+    print(np.round(y_pred)==y)
 
 
 if __name__ == "__main__":
